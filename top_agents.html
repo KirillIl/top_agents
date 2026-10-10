@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ТОП Агентств и Агентств по Регионам</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        label {
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        select, input {
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        select {
+            min-width: 200px;
+            cursor: pointer;
+            background: white;
+        }
+        
+        input {
+            min-width: 300px;
+        }
+        
+        .stats {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 18px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+        }
+        
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+        
+        tbody tr:hover {
+            background: #f5f5f5;
+        }
+        
+        tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+        
+        tbody tr:nth-child(even):hover {
+            background: #f0f0f0;
+        }
+        
+        .id-cell {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .name-cell {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+        
+        .highlight {
+            background: #fff3cd !important;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            select, input {
+                width: 100%;
+                min-width: auto;
+            }
+            
+            .stats {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 ТОП Агентств и Агентств по Регионам</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="regionSelect">Выберите регион:</label>
+                <select id="regionSelect">
+                    <option value="">-- Выберите регион --</option>
+                    <option value="Уфа">Уфа</option>
+                    <option value="Казань">Казань</option>
+                    <option value="Екатеринбург">Екатеринбург</option>
+                    <option value="Воронеж">Воронеж</option>
+                    <option value="Ростов">Ростов</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="searchInput">Поиск по ID:</label>
+                <input type="text" id="searchInput" placeholder="Введите ID для поиска...">
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-value" id="totalCount">0</span>
+                <span class="stat-label">всего записей</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="displayCount">0</span>
+                <span class="stat-label">отображено</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="currentRegion">-</span>
+                <span class="stat-label">текущий регион</span>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table id="agentsTable">
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Название агентства / ФИО</th>
+                        <th>ID</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="3" class="no-data">Выберите регион или выполните поиск по ID</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        // Данные из файла
+        const allData = {
+            "Уфа": [
+                { name: "ADT Недвижимость", id: "18359621" },
+                { name: "АН \"Вайдер\"", id: "78285151" },
+                { name: "АН «Династия»", id: "397850357" },
+                { name: "АН Выбор Первых", id: "62368862" },
+                { name: "АН ЭКСПЕРТ СИТИ", id: "286507236" },
+                { name: "ЮНИКОР-цифровая платформа", id: "71362004" },
+                { name: "Самолет Плюс, Новоселье Губкина 26", id: "25143239" },
+                { name: "АН Дельта инвест", id: "80915141" },
+                { name: "АН Макромир", id: "13274482" },
+                { name: "ЦНС Статус", id: "72974840" },
+                { name: "Шагалеева Екатерина Владимировна", id: "130272506" }
+            ],
+            "Казань": [
+                { name: "АН \"АЛЬТА-ХОУМ\"", id: "142060993" },
+                { name: "АН \"Нигез\"", id: "406963085" },
+                { name: "АН A1 Brokers Group", id: "224220166" },
+                { name: "АН Реневада", id: "143655548" },
+                { name: "КСЕНИЯ (это Грантера)", id: "172312161" },
+                { name: "ООО АН «Империя»", id: "11067206" },
+                { name: "Эдуард Калистратов", id: "235742997" },
+                { name: "Лейсан", id: "97816227" },
+                { name: "Адель", id: "146733922" },
+                { name: "House Up", id: "201949189" }
+            ],
+            "Екатеринбург": [
+                { name: "Invest Development", id: "387430122" },
+                { name: "Самолет Плюс (трамвайный)", id: "176494406" },
+                { name: "Самолет Плюс Академический", id: "203167104" },
+                { name: "Новый Ориентир", id: "191365191" },
+                { name: "Недвижка 18+", id: "372295089" },
+                { name: "Uniqvill", id: "233040147" },
+                { name: "Willdom", id: "278033337" },
+                { name: "Драже", id: "4290894" },
+                { name: "Среда", id: "441873363" },
+                { name: "Новостройка 24", id: "249768756" },
+                { name: "Квартира про", id: "2430415023" }
+            ],
+            "Воронеж": [
+                { name: "Квартиры в Воронеже (Союз застройщиков, ИП Санникова Д.И., ИП Полосенко Л.)", id: "381499263" },
+                { name: "Квартиры тут (ИП Ломакин Р., Каменев А.)", id: "390814446" },
+                { name: "Домнушка", id: "134312546" },
+                { name: "Айдаркина Э", id: "170482397" },
+                { name: "Объединение застройщиков (ИП Кондратьева И.А.)", id: "441173719" },
+                { name: "Никитин и партнёры", id: "380323745" },
+                { name: "Новостройки Воронеж 1983", id: "52654204" },
+                { name: "Апекс (ИП Смаглиев)", id: "2608537" }
+            ],
+            "Ростов": [
+                { name: "Форсаж/Welcome Day", id: "26031128" },
+                { name: "Агентство недвижимости \"БРЕЛОК\"", id: "400794486" },
+                { name: "Глобал Инвест Групп", id: "120222396" },
+                { name: "АН ВЛАДИС", id: "400794486" },
+                { name: "СОГЛАСИЕ", id: "82846230" },
+                { name: "АН Аякс", id: "155541349" },
+                { name: "АН \"Dомиан\"", id: "6870161" },
+                { name: "Без процентов", id: "391058136" },
+                { name: "Lumen", id: "290316066" }
+            ]
+        };
+        
+        // Подсчет общего количества записей
+        let totalRecords = 0;
+        for (let region in allData) {
+            totalRecords += allData[region].length;
+        }
+        document.getElementById('totalCount').textContent = totalRecords;
+        
+        const regionSelect = document.getElementById('regionSelect');
+        const searchInput = document.getElementById('searchInput');
+        const tableBody = document.getElementById('tableBody');
+        const displayCount = document.getElementById('displayCount');
+        const currentRegion = document.getElementById('currentRegion');
+        
+        let currentData = [];
+        
+        function renderTable(data) {
+            tableBody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="no-data">Нет данных для отображения</td></tr>';
+                displayCount.textContent = '0';
+                return;
+            }
+            
+            data.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td class="name-cell">${item.name}</td>
+                    <td class="id-cell">${item.id}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            displayCount.textContent = data.length;
+        }
+        
+        function filterData() {
+            const region = regionSelect.value;
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            
+            currentRegion.textContent = region || '-';
+            
+            if (!region && !searchTerm) {
+                currentData = [];
+                renderTable([]);
+                return;
+            }
+            
+            let data = [];
+            
+            if (region) {
+                data = allData[region] || [];
+            } else {
+                // Поиск по всем регионам
+                for (let reg in allData) {
+                    data = data.concat(allData[reg]);
+                }
+            }
+            
+            if (searchTerm) {
+                data = data.filter(item => item.id.toLowerCase().includes(searchTerm));
+            }
+            
+            currentData = data;
+            renderTable(data);
+        }
+        
+        regionSelect.addEventListener('change', filterData);
+        searchInput.addEventListener('input', filterData);
+        
+        // Инициализация
+        renderTable([]);
+    </script>
+</body>
+</html>
